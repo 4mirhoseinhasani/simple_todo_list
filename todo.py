@@ -15,28 +15,8 @@ class Task:
 
 class ToDoList:
 
-    def __init__(self,filename):
-        self.filename = filename        
+    def __init__(self):        
         self.tasks = []
-
-
-    def load_tasks(self):
-        if not self.tasks:
-            print("ToDo List is empty!\n")
-            return
-
-        try:
-            with open(self.filename, mode="r", newline="") as f_in:
-                reader = csv.reader(f_in)
-                next(reader)    # for pass headers
-                for row in reader:
-                    if len(row) == 3:
-                        name, description, priority = row
-                        task = Task(name, description,priority)
-                        self.tasks.append(task)
-        
-        except FileNotFoundError:
-            print(f"file {self.filename} not found!\n")
 
 
     def add_task(self):
@@ -46,17 +26,12 @@ class ToDoList:
         priority = input("Enter priority (High / Medium / Low): ")
         task = Task(name, description, priority)    # make a list of name, description, priority as a task
         self.tasks.append(task)
+        print("Task added successfully")
         
-        # save task into csv file        
-        with open(self.filename, mode="a", newline="") as f_out:
-            writer = csv.writer(f_out)
-            writer.writerow([task.name, task.description, task.priority])
-        print("Task added successfully\n")
-
 
     def remove_task(self):
         if not self.tasks:
-            print("ToDoList is empty!\n")
+            print("ToDoList is empty!")
             return
         
         # use tabulate for better display tasks
@@ -70,24 +45,101 @@ class ToDoList:
                 removed = self.tasks.pop(choice - 1)
                 print(f"removed: {removed.name}\n")    
             else:
-                print("Invalid task number.\n")
+                print("Invalid task number.")
             return
         
         except ValueError:
-            print("Please Enter valid number.\n")
+            print("Please Enter valid number.")
     
     
     def show_tasks(self):
+        if not  self.tasks:
+            print("ToDoList in Empty!")
+            return
+        
         # use tabulate for better display tasks
-        table = [[i+1, t.name, t.description, t.priority] for i, t in enumerate(self.tasks)]
+        table = [[i+1, task.name, task.description, task.priority] for i, task in enumerate(self.tasks)]
         headers = ["#", "name", "description", "priority"]
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
 
+    def load_tasks_from_file(self, filename):
+        try:
+            with open(filename, mode="r", newline="") as f_in:
+                reader = csv.reader(f_in)
+                next(reader)    # for pass headers
+                for row in reader:
+                    name, description, priority = row
+                    task = Task(name, description,priority)    # create suitable format for adding to list
+                    self.tasks.append(task)
+        
+        except FileNotFoundError:
+            print(f"file {filename} not found!")
+            return
+
+    def save_tasks_to_file(self, filename="result.csv"):
+        try:
+            with open(filename, mode='w', newline='') as f_out:
+                writer = csv.writer(f_out)
+                writer.writerow(["name", "description", "priority"])    # write headers 
+                for task in self.tasks:
+                    writer.writerow([task.name, task.description, task.priority])
+        
+        except ValueError:
+            print("Please Enter valid name for file!")
+            return
 
 
-work_1 = ToDoList("tasks.csv")
-work_1.add_task()
-work_1.load_tasks()
-work_1.remove_task()
-work_1.show_tasks()
+def show_menu():
+    options = ['add Task', 'remove Task','show Tasks', 'load csv file', 'seve csv file', 'exit']
+    table = [[i, item] for i, item in enumerate(options, start=1)]    # a list of items for the user to select
+    headers = ['Options']
+    print(tabulate(table, headers=headers, tablefmt='grid'))    # print in tabulate form
+    choice = input("choose between 1 and 6: ")
+    return choice
+
+# user interface
+
+print("Let's go to make a ToDoList! ")
+todo = ToDoList()   # make a instance for ToDoList class
+
+while True:
+    choice = show_menu()
+    try:
+        if not choice.isdigit():
+            print("please enter valid number between 1-6!")
+            continue
+
+        elif choice == '1':
+            todo.add_task()
+
+        elif choice == '2':
+            todo.remove_task()
+
+        elif choice == '3':
+            todo.show_tasks()
+            
+        elif choice == '4':
+            filename = input("Please enter csv file path for load task: ")
+            todo.load_tasks_from_file(filename)
+
+        elif choice == '5':
+            res = input("do you want save in new file? (Y/N) ")
+            
+            if res.lower() == "y":
+                filename = input("Please enter you file name: ")
+                todo.save_tasks_to_file(filename)
+            
+            elif res.lower() == "n":
+                todo.save_tasks_to_file()
+
+        elif choice == '6':
+            break
+        
+        else:
+            print("please enter valid number between 1-6!")
+            continue
+    
+    except Exception as e:
+        print(f"Erorr {e}")
+        break
